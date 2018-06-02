@@ -81,15 +81,15 @@ Modifier le fichier de fichier de configuration `001-reverse-proxy.conf` pour qu
 >	ErrorLog ${APACHE_LOG_DIR}/error.log
 >	CustomLog ${APACHE_LOG_DIR}/access.log combined
 >
->	ProxyPass "/api/students/" "http://172.17.0.3:3000"
->	ProxyPassReverse "/api/students/" "http://172.17.0.3:3000"
+>	ProxyPass "/api/students/" "http://172.17.0.3:3000/"
+>	ProxyPassReverse "/api/students/" "http://172.17.0.3:3000/"
 >
->	ProxyPass "/" "http://172.17.0.2:80"
->	ProxyPassReverse "/" "http://172.17.0.2:80"
+>	ProxyPass "/" "http://172.17.0.2:80/"
+>	ProxyPassReverse "/" "http://172.17.0.2:80/"
 ></VirtualHost>
 
 - La règle par défaut "/" doit être en dernier.
-- Il est important de bien écrire les "/" de fin de ligne "/api/students/" -> "http://ip:port/"
+- Il est important de bien écrire les "/" de fin de ligne "/api/students/" -> "http://ip:port/" ++TRÈS IMPORTANT++
 - On enlève "ServerAdmin" et "DocumentRoot" car le serveur ne va pas transmettre de contenu static.
 - Il faut ajouter les éléments "ProxyPass" et "ProxyPassReverse" du modeul proxy.
 - "ProxyPassReverse" pour que les entêtes de retour correspondent au serveur proxy.
@@ -144,10 +144,10 @@ On crée un fichier `000-default.conf` dans le quel on créer un virtual host vi
 >   #ErrorLog ${APACHE_LOG_DIR}/error.log
 >   #CustomLog ${APACHE_LOG_DIR}/access.log combined
 >
->   ProxyPass "/api/students/" "http://172.17.0.3:3000"
->   ProxyPassReverse "/api/students/" "http://172.17.0.3:3000"
->   ProxyPass "/" "http://172.17.0.2:80"
->   ProxyPassReverse "/" "http://172.17.0.2:80">
+>   ProxyPass "/api/students/" "http://172.17.0.3:3000/"
+>   ProxyPassReverse "/api/students/" "http://172.17.0.3:3000/"
+>   ProxyPass "/" "http://172.17.0.2:80/"
+>   ProxyPassReverse "/" "http://172.17.0.2:80/">
 ></VirtualHost>
 
 Constuire l'image docker : `docker build -t res/apache_reverse_proxy .`
@@ -158,6 +158,21 @@ Il faut configurer le fichier host pour que cela fonctionne.
 `/etc/hosts`
 
 Problème avec la configuaration du reverse proxy. : "The proxy server received an invalid response from an upstream server."
+elated_engelbart
+express_dynamic
+apache_static
 
 
-## Step 4
+## Step 4 AJAX requests with JQuery
+`fb-ajax-jquery`
+Arrêter les containers : `docker kill <container name>`
+Supprimer tous les containers : `docker rm \`docker ps -qa\``
+
+Ajouter l'installation de vim dans le Dockerfile de l'image `apache-php-image`
+>FROM php:7.0-apache
+>
+>RUN apt-get update && \
+>    apt-get install -y vim
+>
+>COPY src/ /var/www/html/
+
