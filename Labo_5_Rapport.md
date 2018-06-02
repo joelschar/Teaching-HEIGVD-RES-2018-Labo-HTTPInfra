@@ -174,5 +174,45 @@ Ajouter l'installation de vim dans le Dockerfile de l'image `apache-php-image`
 >RUN apt-get update && \
 >    apt-get install -y vim
 >
->COPY src/ /var/www/html/
+>COPY content/ /var/www/html/
+
+Rebuild l'image : `docker build -t res/apache_php .`
+Idem pour reverser_proxy : `docker build -t res/apache_reverse_proxy .`
+Idem pour express_students : `docker build -t res/express_students .`
+
+relancer les containers dans le bon ordre pour que les adresse ip soient juste selon la config du proxy.
+apache-statis: `docker run -d --name apache-static res/apache_php`
+expresse-dynamic: `docker run -d --name express-dynamic res/express_students`
+reverse-proxy: `docker run -d -p 8080:80 --name apache-reverse-proxy res/apache_reverse_proxy`
+
+On se connect sur le container "apache-static" pour faire la configuration ajax
+`docker exec -it apache-static /bin/bash`
+
+garder une copie de `index.html` -> `index.html.orig`
+
+Inclure un scipt js en bas de la page index.html pour chager les students
+><!-- Custom script to load students -->
+><script src="js/students.js"></script>
+
+On crée le script `students.js` dans js
+- la variable "$" est un nom de variable utilisé par JQuery. -> quand JQuery à fini d'être chargé, alors exécuter cette fonction.
+- Le script va faire une requête sur le serveur "express-students" pour récupérer le tableau json.
+>$(function(){
+>	console.log("loading students");
+>
+>	function loadStudents() {
+>		$.getJSON( "/api/students/", function( students ) {
+>			console.log(students);
+>			var message = "Nobody is here";
+>			if ( studnets.length > 0 ) {
+>				message = students[0].firstname + " " + students[0].lastName;
+>			}
+>			$(".skills").text(message);
+>		});
+>	};
+>});
+
+- `$.getJSON( "/api/students/", function( students ) {` : emet une requête de contun JSON vers "/api/students/" et transmet la réponse à la fonction de call back
+- `$(".skills").text(message);` : récupère un élément du "DOM" page html pour le remplacer avec le message
+
 
