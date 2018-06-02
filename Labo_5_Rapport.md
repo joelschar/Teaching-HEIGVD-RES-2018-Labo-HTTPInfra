@@ -204,15 +204,97 @@ On crée le script `students.js` dans js
 >		$.getJSON( "/api/students/", function( students ) {
 >			console.log(students);
 >			var message = "Nobody is here";
->			if ( studnets.length > 0 ) {
->				message = students[0].firstname + " " + students[0].lastName;
+>			if ( students.length > 0 ) {
+>				message = students[0].firstName + " " + students[0].lastName;
 >			}
->			$(".skills").text(message);
+>			$(".welcom").text(message);
 >		});
 >	};
+>	loadStudents();
+>	setInterval( loadStudents , 2000 );
 >});
 
 - `$.getJSON( "/api/students/", function( students ) {` : emet une requête de contun JSON vers "/api/students/" et transmet la réponse à la fonction de call back
-- `$(".skills").text(message);` : récupère un élément du "DOM" page html pour le remplacer avec le message
+- `$(".welcom").text(message);` : récupère un élément du "DOM" page html pour le remplacer avec le message ( référene un nom de classe ici welcom, également disponnible pour d'autre attributs).
 
+Copier le script et les modifs du fichier index.html sur les fichiers hors de l'image.
+Rebuild l'image : `docker build -t res/apache_php .`
+relancer les containers dans le bon ordre
 
+## Step 5 Dynamic reverse proxy
+`fb-dynamic_reverse_proxy`
+
+Il est possible de définir des variable d'environnement à l'exécussion d'un docker, ces variables pourront être modifiés depuis l'extérieur du container et accessible depuis l'intéreur.
+```docker run -d
+	-e STATIC_APP=172.17.0.x:80
+	-e DYNAMIC_APP=172.17.0.y:3000
+	--name apache_reverse_proxy
+	-p 8080:80
+	res/apache_reverse_proxy
+```
+
+Créer un script `setup.sh` pour faire la configuration dynamique.
+
+essai des variable d'env : `docker run -e HELLO=world -e RES=heigvd -it res/apache_reverse_proxy /bin/bash`
+Il est ensuite possible de voir ces variables dans le container avec `export`.
+
+Modifier le Dockerfile du reverse proxy pour executer la commande de configuration avant de démarrer.
+
+Créer un fichier qui démarre appache ( on s'inspire des scripts utilisé par les auteurs de l'image docker )
+[](https://github.com/docker-library/php/tree/78125d0d3c32a87a05f56c12ca45778e3d4bb7c9/7.0/stretch/apache)
+script : `apache2-foreground`
+-> c'est dans ce script qu'on va écrire la configuration setup.sh
+
+rendre le script exécutable: `chmod 755 apache2-foreground`
+
+Il faut modifier notre Dockerfile pour copier ce script à la place de l'autre dans l'image
+`COPY apache2-foreground /usr/local/bin/`
+
+Rebuild l'image : `docker build -t res/apache_reverse_proxy .`
+contrôler le fonctionnement : `docker run -e STATIC_APP=172.17.0.2:80 -e DYNAMIC_APP=172.17.0.3:3000 res/apache_reverse_proxy`
+On voit mnt les valeurs affichées dans les logs de boot.
+
+### template de configuration avec php
+Créer le fichier "templates" dans "apache_reverse_proxy"
+Créer dans template "config-template.php", un template de configuration du serveur apach2
+
+><?php
+>    $dynamic_app = getenv('DYNAMIC_APP');
+>    $static_app = getenv('STATIC_APP');
+>?>
+><VirtualHost *:80>
+>    ServerName demo.res.ch
+>    
+>    ProxyPass '/api/students/' 'http://<?php print "$dynamic_app"?>/'
+>    ProxyPassReverse '/api/students/' 'http://<?php print "$dynamic_app"?>/'
+>   
+>    ProxyPass '/' 'http://<?php print "$static_app"?>/'
+>    ProxyPassReverse '/' 'http://<?php print "$static_app"?>/'
+></VirtualHost>
+
+Dans le Dockerfile copier le contenu du template dans /var/apache2/
+`COPY templates /var/apache2/templates`
+
+Rebuild l'image : `docker build -t res/apache_reverse_proxy .`
+Contrôler la copie : `docker run -it -t res/apache_reverse_proxy /bin/bash`
+
+au démarrage du container lancer le script et placer le résultat du template dans le fichier de config
+- ajouter dans `apache2-foreground`: `php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf`
+
+build et contrôler que le fichier soient créés et copiés correctmeent
+avec variable d'env : `docker run -it -e STATIC_APP=172.17.0.x:80 -e DYNAMIC_APP=172.17.0.y:3000 -t res/apache_reverse_proxy`
+accèder au container pour contrôler le contenu du fichier 001-* soit correcte dans "sites-available" et sites-enable" : `docker exec -it festive_almeida /bin/bash`
+on constat que les fichiers contiennent bien les valeurs passée en paramètre au lancement du container.
+
+### tester le setup dynamic
+lancer le serveur apache static : `docker run -d -t res/apache_php` 3x + `docker run -d --name apache-static -t res/apache_php`
+lancer le serveur express : `docker run -d -t res/express_students` 2x + `docker run -d --name express_dynamic -t res/express_students`
+De cette manière les containers utilisé n'auront pas les ips 2 et 3 comme normalement.
+
+récupérer les adresses ip avec instpect :
+static : 5
+dynamic : 8
+
+lancer le proxy avec les bonnes adresses : `docker run -d -e STATIC_APP=172.17.0.5:80 -e DYNAMIC_APP=172.17.0.8:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
+
+contrôler que les ip soient juste sur le reverse proxy avec : `docker logs apache-reverse-proxy`
