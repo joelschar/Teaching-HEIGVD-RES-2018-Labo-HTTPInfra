@@ -298,3 +298,123 @@ dynamic : 8
 lancer le proxy avec les bonnes adresses : `docker run -d -e STATIC_APP=172.17.0.5:80 -e DYNAMIC_APP=172.17.0.8:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
 
 contrôler que les ip soient juste sur le reverse proxy avec : `docker logs apache-reverse-proxy`
+
+
+
+## Step 5, Load Balancing Reverse proxy
+`fb-load-balancing-reverse-proxy`
+
+Activer les modules `mod_proxy_balancer` et `mod_lbmethod_byrequests` dans le dockerfile pour qu'il soit installé au démarage du container. Ces deux modules sont nécessaire pour faire du load balancing entre plusieurs serveurs apache.
+Rebuild l'image : `docker build -t res/apache_reverse_proxy .`
+
+
+
+Faire un test du set up avec load balancer:
+- lancer deux containers apache static : `docker run -d -t res/apache_php`
+- lancer un container reverse proxy : `docker run -d -e STATIC_APP=172.17.0.2:80 -p 8080:80 -t res/apache_reverse_proxy`
+On va faire la config manuellement ici (checker les ip et config du proxy.)
+static 1 : 2
+static 2 : 3
+proxy : 4
+
+se connecter en interactif sur le proxy
+tester que le site est possible sur les deux containers.
+et en passant pas le proxy (demo.res.ch:8080)
+
+configurer le load balancing entre les deux serveurs : `001-reverse-proxy.conf`
+><VirtualHost *:80>
+>	ServerName demo.res.ch
+>
+>	<Proxy balancer://static>
+>		BalancerMemeber 'http://172.17.0.2:80'
+>		BalancerMemeber 'http://172.17.0.3:80'
+>	</Proxy>
+>	ProxyPass '/' 'balancer://static/'
+>	ProxyPassReverse '/' 'balancer://static/'
+></VirtualHost>
+
+Reload apache : `service apache2 reload`
+vérifier que le site est tjr disponnible en stoppand l'un ou lautre des container.
+
+lancer deux containers express dynamic : `docker run -d -t res/express_students`
+configuer pour le load balancing pour le service dynamic:
+><VirtualHost *:80>
+>	ServerName demo.res.ch
+>
+>	<Proxy balancer://dynamic>
+>		BalancerMember 'http://172.17.0.5:3000'
+>		BalancerMember 'http://172.17.0.6:3000'
+>	</Proxy>
+>	ProxyPass '/api/students/' 'balancer://dynamic/'
+>	ProxyPassReverse '/api/students/' 'balancer://dynamic/'
+>
+>	<Proxy balancer://static>
+>		BalancerMember 'http://172.17.0.2:80'
+>		BalancerMember 'http://172.17.0.3:80'
+>	</Proxy>
+>	ProxyPass '/' 'balancer://static/'
+>	ProxyPassReverse '/' 'balancer://static/'
+></VirtualHost>
+
+Tester que le service est tjr disponnbible en stoppant l'un ou l'autre des containers.
+
+Activer le `balancer-manager`:
+ajouter en haut de `001-reverse-proxy.conf`:
+><Location /balancer-manager>
+>	SetHandler balancer-manager
+>	Order Deny,Allow
+>	Deny from all
+>	Allow form all setup
+></Location>
+>ProxyPass /balancer-manager !
+accès : `demo.res.ch:8080/balancer-manager`
+
+Adaptation du template dynamique pour faire la configuration au boot avec des variables d'environnement.
+Le setup est prévu pour deux noeuds static et deux noeuds dynamiques.
+`config-template-balancer.php`:
+><?php
+>    $dynamic_app1 = getenv('DYNAMIC_APP1');
+>    $dynamic_app2 = getenv('DYNAMIC_APP2');
+>    $static_app1 = getenv('STATIC_APP1');
+>    $static_app2 = getenv('STATIC_APP2');
+>
+>?>
+><VirtualHost *:80>
+>    ServerName demo.res.ch
+>
+>    <Location /balancer-manager>
+>        SetHandler balancer-manager
+>        Order Deny,Allow
+>        Deny from all
+>        Allow from all
+>    </Location>
+>    ProxyPass /balancer-manager !
+>
+>    <Proxy balancer://dynamic>
+>        BalancerMember 'http://<?php print "$dynamic_app1"?>'
+>        BalancerMember 'http://<?php print "$dynamic_app2"?>'
+>    </Proxy>
+>    ProxyPass '/api/students/' 'balancer://dynamic/'
+>    ProxyPassReverse '/api/students/' 'balancer://dynamic/'
+>
+>    <Proxy balancer://static>
+>        BalancerMember 'http://<?php print "$static_app1"?>'
+>        BalancerMember 'http://<?php print "$static_app2"?>'
+>    </Proxy>
+>    ProxyPass '/' 'balancer://static//'
+>    ProxyPassReverse '/' 'balancer://static/'
+></VirtualHost>
+
+rebuild : `docker build -t res/apache_reverse_proxy .`
+delete all container: `docker rm `docker ps -qa` `
+
+run static 1: `docker run -d --name apache-static1 -t res/apache_php`
+run static 2: `docker run -d --name apache-static2 -t res/apache_php`
+run dynamic 1: `docker run -d --name express_dynamic1 -t res/express_students`
+run dynamic 2: `docker run -d --name express_dynamic2 -t res/express_students`
+
+run proxy : `docker run -d -e STATIC_APP1=172.17.0.3:80 -e STATIC_APP2=172.17.0.5:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.2:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
+
+contrôle infrastructure et tester
+La reprise par l'autre noeud peut être assez longue.(patience)
+
