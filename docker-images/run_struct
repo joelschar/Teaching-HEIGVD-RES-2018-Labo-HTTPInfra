@@ -1,0 +1,15 @@
+#!/bin/bash
+
+docker kill $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker build -t res/apache_php ./apache-php-image/
+docker build -t res/express_students ./express-image/
+docker build -t res/apache_reverse_proxy ./apache-reverse-proxy/
+
+docker run -d --name apache-static1 -t res/apache_php
+docker run -d --name apache-static2 -t res/apache_php
+docker run -d --name express_dynamic1 -t res/express_students
+docker run -d --name express_dynamic2 -t res/express_students
+
+docker run -d -e STATIC_APP1=172.17.0.2:80 -e STATIC_APP2=172.17.0.3:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.5:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy

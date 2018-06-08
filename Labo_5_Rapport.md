@@ -418,3 +418,10 @@ run proxy : `docker run -d -e STATIC_APP1=172.17.0.3:80 -e STATIC_APP2=172.17.0.
 contrôle infrastructure et tester
 La reprise par l'autre noeud peut être assez longue.(patience)
 
+
+## Step 6, load balancing avec sticky session.
+`fb-load-balancing-sticky-session`
+
+On va ajouter un compteur sur les valeurs affichées par l'un ou l'autre des serveur. on va ainsi rendre visuel la répartition de charge.
+
+ 

@@ -4,6 +4,9 @@ var chance = new Chance();
 const express = require('express');
 const app = express();
 
+// counter for the server
+var inc = 0;
+
 app.get('/',function(req, res) {
     res.send( generateStudents() );
 });
@@ -13,7 +16,9 @@ app.listen(3000, function() {
 });
 
 function generateStudents(){
-    
+
+    inc++;
+
     var numberOfStudents = chance.integer({
         min: 0,
         max: 10
@@ -26,7 +31,7 @@ function generateStudents(){
         var gender = chance.gender();
 
         var birthYear = chance.year({
-            min: 1986, 
+            min: 1986,
             max: 1996
         });
 
@@ -38,7 +43,8 @@ function generateStudents(){
             gender: gender,
             birthday: chance.birthday({
                 year: birthYear
-            })
+            }),
+            count: inc
         });
     }
     console.log(students);
