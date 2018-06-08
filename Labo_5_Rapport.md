@@ -2,7 +2,7 @@
 
 ## Step 1 apache static
 `fb-apache-static`
-image docker de base, php : [](https://hub.docker.com/_/php/)
+image docker de base, php : [image docker php](https://hub.docker.com/_/php/)
 
 lancer le container docker du serveur apache directement : `docker run -d -p 9090:80 php:7.0-apache`
 
@@ -20,7 +20,7 @@ Pour que tous les fichiers soient chargés correctement, il est nécessaire que 
 ## Step 2 express
 `fb-express-dynamic`
 ### a
-image docker de base, node : [](https://hub.docker.com/_/node/)
+image docker de base, node : [image docker node](https://hub.docker.com/_/node/)
 
 Dans le rep src qui va contenir les fichiers sources de l'application : `npm init`
 Va générer le fichier package.json
@@ -32,7 +32,7 @@ create docker image : `docker build -t res/express_students .`
 Les containers ne restent pas en exécution car dès que le script est termié le container d'arrête.
 
 ### b
-Détail d'une requête http : [](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/)
+Détail d'une requête http : [construction d'une requête http](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/)
 
 Framework web : Express.js
 Installer express : `npm install --save express`
@@ -241,7 +241,7 @@ Il est ensuite possible de voir ces variables dans le container avec `export`.
 Modifier le Dockerfile du reverse proxy pour executer la commande de configuration avant de démarrer.
 
 Créer un fichier qui démarre appache ( on s'inspire des scripts utilisé par les auteurs de l'image docker )
-[](https://github.com/docker-library/php/tree/78125d0d3c32a87a05f56c12ca45778e3d4bb7c9/7.0/stretch/apache)
+[script de lancement du docker](https://github.com/docker-library/php/tree/78125d0d3c32a87a05f56c12ca45778e3d4bb7c9/7.0/stretch/apache)
 script : `apache2-foreground`
 -> c'est dans ce script qu'on va écrire la configuration setup.sh
 
@@ -413,7 +413,7 @@ run static 2: `docker run -d --name apache-static2 -t res/apache_php`
 run dynamic 1: `docker run -d --name express_dynamic1 -t res/express_students`
 run dynamic 2: `docker run -d --name express_dynamic2 -t res/express_students`
 
-run proxy : `docker run -d -e STATIC_APP1=172.17.0.3:80 -e STATIC_APP2=172.17.0.5:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.2:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
+run proxy : `docker run -d -e STATIC_APP1=172.17.0.2:80 -e STATIC_APP2=172.17.0.3:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.5:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
 
 contrôle infrastructure et tester
 La reprise par l'autre noeud peut être assez longue.(patience)
@@ -422,6 +422,25 @@ La reprise par l'autre noeud peut être assez longue.(patience)
 ## Step 6, load balancing avec sticky session.
 `fb-load-balancing-sticky-session`
 
+[apache2 proxy balancer](https://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html#example)
+
 On va ajouter un compteur sur les valeurs affichées par l'un ou l'autre des serveur. on va ainsi rendre visuel la répartition de charge.
 
- 
+création du script pour faire le build et run de toute la structure.
+
+activer le module header :
+configurer la sticky session basé sur le cookies
+>    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+>    <Proxy balancer://dynamic>
+>        BalancerMember 'http://<?php print "$dynamic_app1"?>' route=1
+>        BalancerMember 'http://<?php print "$dynamic_app2"?>' route=2
+>        ProxySet stickysession=ROUTEID
+>    </Proxy>
+
+en utilisant le template load-balancing -> round robin
+en utilisant le template load-balancing-sticky -> c'est tjr le même serveur express qui est utilisé pour le même client.
+
+
+## Step 7, Dynamic cluster management
+
+
