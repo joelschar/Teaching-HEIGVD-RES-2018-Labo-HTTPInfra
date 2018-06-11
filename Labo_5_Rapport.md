@@ -513,10 +513,11 @@ La reprise par l'autre noeud peut être assez longue.(patience)
 `fb-load-balancing-sticky-session`
 
 ### Acceptance Criteria
-* You do a setup to demonstrate the notion of sticky session.
-* You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
-* You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
-* You have documented your configuration and your validation procedure in your report.
+* OK You do a setup to demonstrate the notion of sticky session.
+* OK You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
+* OK You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
+   choice different because more visual.
+* OK You have documented your configuration and your validation procedure in your report.
 
 ### Realisation
 
