@@ -20,8 +20,8 @@
         BalancerMember 'http://<?php print "$dynamic_app1"?>'
         BalancerMember 'http://<?php print "$dynamic_app2"?>'
     </Proxy>
-    ProxyPass '/api/students/' 'balancer://dynamic/'
-    ProxyPassReverse '/api/students/' 'balancer://dynamic/'
+    ProxyPass '/api/companies/' 'balancer://dynamic/'
+    ProxyPassReverse '/api/companies/' 'balancer://dynamic/'
     
     <Proxy balancer://static>
         BalancerMember 'http://<?php print "$static_app1"?>'

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+docker kill $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker build -t res/apache_php ./apache-php-image/
+docker build -t res/express_companies ./express-image/
+docker build -t res/apache_reverse_proxy ./apache-reverse-proxy/
+
+docker run -d --name apache_static1 res/apache_php
+docker run -d --name apache_static2 res/apache_php
+
+docker run -d --name express_dynamic1 res/express_companies
+docker run -d --name express_dynamic2 res/express_companies
+
+
+docker run -d -e STATIC_APP1=172.17.0.2:80 -e STATIC_APP2=172.17.0.3:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.5:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy
+
+docker ps
+
+echo "apache_static 1: "
+docker inspect apache_static1 | grep IPAddress
+echo "apache_static 2: "
+docker inspect apache_static2 | grep IPAddress
+
+echo "express_dynamic 1: "
+docker inspect express_dynamic1 | grep IPAddress
+echo "express_dynamic 2: "
+docker inspect express_dynamic2 | grep IPAddress
+
+echo "apache_reverse_proxy: "
+docker logs apache-reverse-proxy
+
+firefox "http://demo.res.ch:8080"
+firefox "http://demo.res.ch:8080/balancer-manager/"
