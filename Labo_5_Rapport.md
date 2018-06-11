@@ -2,6 +2,18 @@
 
 ## Step 1 apache static
 `fb-apache-static`
+
+### Acceptance criteria
+
+* You have a GitHub repo with everything needed to build the Docker image.
+* You do a demo, where you build the image, run a container and access content from a browser.
+* You have used a nice looking web template, different from the one shown in the webcast.
+* You are able to explain what you do in the Dockerfile.
+* You are able to show where the apache config files are located (in a running container).
+* You have documented your configuration in your report.
+
+### Realisation
+
 image docker de base, php : [image docker php](https://hub.docker.com/_/php/)
 
 lancer le container docker du serveur apache directement : `docker run -d -p 9090:80 php:7.0-apache`
@@ -19,7 +31,19 @@ Pour que tous les fichiers soient chargés correctement, il est nécessaire que 
 
 ## Step 2 express
 `fb-express-dynamic`
-### a
+
+### Acceptance criteria
+
+* You have a GitHub repo with everything needed to build the Docker image.
+* You do a demo, where you build the image, run a container and access content from a browser.
+* You generate dynamic, random content and return a JSON payload to the client.
+* You cannot return the same content as the webcast (you cannot return a list of people).
+* You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
+* You have documented your configuration in your report.
+
+### Realisation
+
+#### a
 image docker de base, node : [image docker node](https://hub.docker.com/_/node/)
 
 Dans le rep src qui va contenir les fichiers sources de l'application : `npm init`
@@ -31,7 +55,7 @@ create docker image : `docker build -t res/express_students .`
 `docker run res/express_students`
 Les containers ne restent pas en exécution car dès que le script est termié le container d'arrête.
 
-### b
+#### b
 Détail d'une requête http : [construction d'une requête http](https://nodejs.org/en/docs/guides/anatomy-of-an-http-transaction/)
 
 Framework web : Express.js
@@ -43,16 +67,28 @@ Créer un container depuis cette image : `docker run res/express_students`
 Ou avec un port mapping : `docker run -p 9090:3000 res/express_students`
 Accèder à la machine sur son adresse ip / ou localhost : `telnet 172.17.0.3 3000` / `telnet localhost 9090`
 
-#### postman
+##### postman
 permet de générer et sauver des requêtes http
 
 ## Step 3
 `fb-apache-reverse-proxy`
+
+
+### Acceptance criteria
+
+* You have a GitHub repo with everything needed to build the Docker image for the container.
+* You do a demo, where you start from an "empty" Docker environment (no container running) and where you start 3 containers: static server, dynamic server and reverse proxy; in the demo, you prove that the routing is done correctly by the reverse proxy.
+* You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra). 
+* You are able to explain why the static configuration is fragile and needs to be improved.
+* You have documented your configuration in your report.
+
+### Realisation
+
 Mise en place d'un reverse proxy avec apache afin de rediriger les requêtes dynamiques vers un container et les requêtes de contenu dynamiques vers un autre container.
-### a
+#### a
 explication du setup
 
-### b
+#### b
 Démarrer un container "apache_static" (port 80) : `docker run -d --name apache_static res/apache_php`
 Démarrer un container "expresse_dynmaic" (port 3000): `docker run -d --name express_dynamic res/express_students`
 
@@ -117,7 +153,7 @@ Tester le setup
 
 Le reverse proxy fonctionne donc correctement
 
-### c
+#### c
 Intégrer le setup dans une image docker
 
 la structures des fichiers `sites-available/000-default.conf` et `sites-available/001-reverse-proxy.conf` pour qu'ils puissent être copiés dans l'image docker.
@@ -165,6 +201,17 @@ apache_static
 
 ## Step 4 AJAX requests with JQuery
 `fb-ajax-jquery`
+
+### Acceptance criteria
+
+* You have a GitHub repo with everything needed to build the various images.
+* You do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
+* You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
+* You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
+* You have documented your configuration in your report.
+
+### Realisation
+
 Arrêter les containers : `docker kill <container name>`
 Supprimer tous les containers : `docker rm \`docker ps -qa\``
 
@@ -224,6 +271,17 @@ relancer les containers dans le bon ordre
 ## Step 5 Dynamic reverse proxy
 `fb-dynamic_reverse_proxy`
 
+### Acceptance criteria
+
+* You have a GitHub repo with everything needed to build the various images.
+* You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
+* You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
+* You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
+* You are able to explain how you have implemented the solution and walk us through the configuration and the code.
+* You have documented your configuration in your report.
+
+### Realisation
+
 Il est possible de définir des variable d'environnement à l'exécussion d'un docker, ces variables pourront être modifiés depuis l'extérieur du container et accessible depuis l'intéreur.
 ```docker run -d
 	-e STATIC_APP=172.17.0.x:80
@@ -254,7 +312,7 @@ Rebuild l'image : `docker build -t res/apache_reverse_proxy .`
 contrôler le fonctionnement : `docker run -e STATIC_APP=172.17.0.2:80 -e DYNAMIC_APP=172.17.0.3:3000 res/apache_reverse_proxy`
 On voit mnt les valeurs affichées dans les logs de boot.
 
-### template de configuration avec php
+#### template de configuration avec php
 Créer le fichier "templates" dans "apache_reverse_proxy"
 Créer dans template "config-template.php", un template de configuration du serveur apach2
 
@@ -286,7 +344,7 @@ avec variable d'env : `docker run -it -e STATIC_APP=172.17.0.x:80 -e DYNAMIC_APP
 accèder au container pour contrôler le contenu du fichier 001-* soit correcte dans "sites-available" et sites-enable" : `docker exec -it festive_almeida /bin/bash`
 on constat que les fichiers contiennent bien les valeurs passée en paramètre au lancement du container.
 
-### tester le setup dynamic
+#### tester le setup dynamic
 lancer le serveur apache static : `docker run -d -t res/apache_php` 3x + `docker run -d --name apache-static -t res/apache_php`
 lancer le serveur express : `docker run -d -t res/express_students` 2x + `docker run -d --name express_dynamic -t res/express_students`
 De cette manière les containers utilisé n'auront pas les ips 2 et 3 comme normalement.
@@ -300,9 +358,16 @@ lancer le proxy avec les bonnes adresses : `docker run -d -e STATIC_APP=172.17.0
 contrôler que les ip soient juste sur le reverse proxy avec : `docker logs apache-reverse-proxy`
 
 
-
 ## Step 5, Load Balancing Reverse proxy
 `fb-load-balancing-reverse-proxy`
+
+### Acceptace criteria
+* You extend the reverse proxy configuration to support **load balancing**. 
+* You show that you can have **multiple static server nodes** and **multiple dynamic server nodes**. 
+* You prove that the **load balancer** can distribute HTTP requests between these nodes.
+* You have documented your configuration and your validation procedure in your report.
+
+### Realisation
 
 Activer les modules `mod_proxy_balancer` et `mod_lbmethod_byrequests` dans le dockerfile pour qu'il soit installé au démarage du container. Ces deux modules sont nécessaire pour faire du load balancing entre plusieurs serveurs apache.
 Rebuild l'image : `docker build -t res/apache_reverse_proxy .`
@@ -422,6 +487,14 @@ La reprise par l'autre noeud peut être assez longue.(patience)
 ## Step 6, load balancing avec sticky session.
 `fb-load-balancing-sticky-session`
 
+### Acceptance Criteria
+* You do a setup to demonstrate the notion of sticky session.
+* You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
+* You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
+* You have documented your configuration and your validation procedure in your report.
+
+### Realisation
+
 [apache2 proxy balancer](https://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html#example)
 
 On va ajouter un compteur sur les valeurs affichées par l'un ou l'autre des serveur. on va ainsi rendre visuel la répartition de charge.
@@ -442,5 +515,32 @@ en utilisant le template load-balancing-sticky -> c'est tjr le même serveur exp
 
 
 ## Step 7, Dynamic cluster management
+`fb-dynamic-cluster-management`
+
+### Acceptance critera
+* You develop a solution, where the server nodes (static and dynamic) can appear or disappear at any time.
+* You show that the load balancer is dynamically updated to reflect the state of the cluster.
+* You describe your approach (are you implementing a discovery protocol based on UDP multicast? are you using a tool such as serf?)
+* You have documented your configuration and your validation procedure in your report.
+
+### Realisation
+
+## Step 8, UI management
+`fb-ui-management`
+
+### Acceptance critera
+* You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
+* You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
+* You have documented your configuration and your validation procedure in your report.
+
+### Realisation
+
+### installation :
+`docker volume create portainer_data`
+`docker run -d -p 9000:9000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer`
+
+créer un compte admin et choisir de gérer l'environnement local
+admin | 12341234
+
 
 
