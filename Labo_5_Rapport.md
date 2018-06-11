@@ -211,10 +211,10 @@ Il faut configurer le fichier host pour que cela fonctionne.
 ### Acceptance criteria
 
 * OK You have a GitHub repo with everything needed to build the various images.
-* You do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
-* You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
+* OK You do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
+* OK You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
 * OK You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
-	the data has to come from the same origine.
+	the data has to come from the same origine or the browser will block the request.
 * OK You have documented your configuration in your report.
 
 ### Realisation
