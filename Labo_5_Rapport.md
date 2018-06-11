@@ -5,12 +5,12 @@
 
 ### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the Docker image.
-* You do a demo, where you build the image, run a container and access content from a browser.
-* You have used a nice looking web template, different from the one shown in the webcast.
-* You are able to explain what you do in the Dockerfile.
-* You are able to show where the apache config files are located (in a running container).
-* You have documented your configuration in your report.
+* OK You have a GitHub repo with everything needed to build the Docker image.
+* OK You do a demo, where you build the image, run a container and access content from a browser.
+* OK You have used a nice looking web template, different from the one shown in the webcast.
+* OK You are able to explain what you do in the Dockerfile.
+* OK You are able to show where the apache config files are located (in a running container).
+* OK You have documented your configuration in your report.
 
 ### Realisation
 
@@ -29,17 +29,20 @@ Il faut rebuild l'image pour que les nouveaux fichiers soient copiés.
 
 Pour que tous les fichiers soient chargés correctement, il est nécessaire que les droits adéquats soient donnés sur les répertoires dans `/var/www/html`. Pour résoudre ce problème nous avons donnés tous les droits sur tous les fichiers.
 
+apache config files `/etc/apache2/`
+
+
 ## Step 2 express
 `fb-express-dynamic`
 
 ### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the Docker image.
-* You do a demo, where you build the image, run a container and access content from a browser.
-* You generate dynamic, random content and return a JSON payload to the client.
-* You cannot return the same content as the webcast (you cannot return a list of people).
-* You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
-* You have documented your configuration in your report.
+* OK You have a GitHub repo with everything needed to build the Docker image.
+* OK You do a demo, where you build the image, run a container and access content from a browser.
+* OK You generate dynamic, random content and return a JSON payload to the client.
+* OK You cannot return the same content as the webcast (you cannot return a list of people).
+* OK You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
+* OK You have documented your configuration in your report.
 
 ### Realisation
 
@@ -51,8 +54,8 @@ Va générer le fichier package.json
 
 Installer le module change :  `npm install --save chance`
 
-create docker image : `docker build -t res/express_students .`
-`docker run res/express_students`
+create docker image : `docker build -t res/express_companies .`
+`docker run res/express_companies`
 Les containers ne restent pas en exécution car dès que le script est termié le container d'arrête.
 
 #### b
@@ -61,14 +64,15 @@ Détail d'une requête http : [construction d'une requête http](https://nodejs.
 Framework web : Express.js
 Installer express : `npm install --save express`
 
-Ecrire le serveur de génération d'étudients sous forme d'un serveur http.
-Créer une image docker avec ce client: `docker build -t res/express_students .`
-Créer un container depuis cette image : `docker run res/express_students`
-Ou avec un port mapping : `docker run -p 9090:3000 res/express_students`
-Accèder à la machine sur son adresse ip / ou localhost : `telnet 172.17.0.3 3000` / `telnet localhost 9090`
+Ecrire le serveur de génération d'entreprises sous forme d'un serveur http.
+Créer une image docker avec ce client: `docker build -t res/express_companies .`
+Créer un container depuis cette image : `docker run res/express_companies`
+Ou avec un port mapping : `docker run -d -p 3000:3000 res/express_companies`
+Accèder à la machine sur son adresse ip / ou localhost : `telnet 172.17.0.3 3000` / `telnet localhost 3000`
 
 ##### postman
 permet de générer et sauver des requêtes http
+
 
 ## Step 3
 `fb-apache-reverse-proxy`
@@ -76,11 +80,12 @@ permet de générer et sauver des requêtes http
 
 ### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the Docker image for the container.
-* You do a demo, where you start from an "empty" Docker environment (no container running) and where you start 3 containers: static server, dynamic server and reverse proxy; in the demo, you prove that the routing is done correctly by the reverse proxy.
-* You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra). 
-* You are able to explain why the static configuration is fragile and needs to be improved.
-* You have documented your configuration in your report.
+* OK You have a GitHub repo with everything needed to build the Docker image for the container.
+* OK You do a demo, where you start from an "empty" Docker environment (no container running) and where you start 3 containers: static server, dynamic server and reverse proxy; in the demo, you prove that the routing is done correctly by the reverse proxy.
+* OK You can explain and prove that the static and dynamic servers cannot be reached directly (reverse proxy is a single entry point in the infra).
+* OK You are able to explain why the static configuration is fragile and needs to be improved.
+	Parce que les adresses ip sont inscrite en dure dans le code du reverse proxy donc compliquer a changer et peuvent être fausses.
+* OK You have documented your configuration in your report.
 
 ### Realisation
 
@@ -90,7 +95,7 @@ explication du setup
 
 #### b
 Démarrer un container "apache_static" (port 80) : `docker run -d --name apache_static res/apache_php`
-Démarrer un container "expresse_dynmaic" (port 3000): `docker run -d --name express_dynamic res/express_students`
+Démarrer un container "expresse_dynmaic" (port 3000): `docker run -d --name express_dynamic res/express_companies`
 
 On fait un `docker inspect <container name>`pour obtenir les adresses IP ( celle-ci changent dynamiquement )
 apache_static : 172.17.0.2
@@ -110,19 +115,21 @@ Pour éditer le fichier il faut installer vim  : `apt-get update`-> `apt-get ins
 doit être refait à chaque fois car il n'y à pas de persistance des données sur ce container.
 On peut donc mettre ces commandes dans le "Dockerfile" pour quelle soit faite à chaque lancement.
 
-Modifier le fichier de fichier de configuration `001-reverse-proxy.conf` pour que les requêtes soit dirigées enfonction du paramètre host indiqué dans le requête.
-><VirtualHost *:80>
->	ServerName demo.res.ch
->
->	ErrorLog ${APACHE_LOG_DIR}/error.log
->	CustomLog ${APACHE_LOG_DIR}/access.log combined
->
->	ProxyPass "/api/students/" "http://172.17.0.3:3000/"
->	ProxyPassReverse "/api/students/" "http://172.17.0.3:3000/"
->
->	ProxyPass "/" "http://172.17.0.2:80/"
->	ProxyPassReverse "/" "http://172.17.0.2:80/"
-></VirtualHost>
+Modifier le fichier de configuration `001-reverse-proxy.conf` pour que les requêtes soit dirigées enfonction du paramètre host indiqué dans le requête.
+```
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	ProxyPass "/api/companies/" "http://172.17.0.3:3000/"
+	ProxyPassReverse "/api/companies/" "http://172.17.0.3:3000/"
+
+	ProxyPass "/" "http://172.17.0.2:80/"
+	ProxyPassReverse "/" "http://172.17.0.2:80/"
+</VirtualHost>
+```
 
 - La règle par défaut "/" doit être en dernier.
 - Il est important de bien écrire les "/" de fin de ligne "/api/students/" -> "http://ip:port/" ++TRÈS IMPORTANT++
@@ -147,7 +154,7 @@ Tester le setup
 >Host: demo.res.ch
 -> contenu web
 
->GET /api/students/ HTTP/1.0
+>GET /api/companies/ HTTP/1.0
 >Host: demo.res.ch
 -> list d'étudiants
 
@@ -170,33 +177,32 @@ Et créer un "Dockerfile" qui effectue la copie est lance les commandes d'activa
 On crée un fichier `000-default.conf` dans le quel on créer un virtual host vide. De cette manière si le champ "Host: " de la requête n'est pas renseigné correctement, emet une erreur au lieu de rediriger automatiquement vers la configuration de `000-reverse-proxy.conf`
 
 `000-default.conf`:
-><VirtualHost *:80>
-></VirtualHost>
+```
+<VirtualHost *:80>
+</VirtualHost>
+```
 
 `001-reverse-proxy.conf`
-><VirtualHost *:80>
->   ServerName demo.res.ch
->
->   #ErrorLog ${APACHE_LOG_DIR}/error.log
->   #CustomLog ${APACHE_LOG_DIR}/access.log combined
->
->   ProxyPass "/api/students/" "http://172.17.0.3:3000/"
->   ProxyPassReverse "/api/students/" "http://172.17.0.3:3000/"
->   ProxyPass "/" "http://172.17.0.2:80/"
->   ProxyPassReverse "/" "http://172.17.0.2:80/">
-></VirtualHost>
+```
+<VirtualHost *:80>
+   ServerName demo.res.ch
+
+   #ErrorLog ${APACHE_LOG_DIR}/error.log
+   #CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+   ProxyPass "/api/companies/" "http://172.17.0.3:3000/"
+   ProxyPassReverse "/api/companies/" "http://172.17.0.3:3000/"
+   ProxyPass "/" "http://172.17.0.2:80/"
+   ProxyPassReverse "/" "http://172.17.0.2:80/">
+</VirtualHost>
+```
 
 Constuire l'image docker : `docker build -t res/apache_reverse_proxy .`
-Démarrer le container : `docker run -d -p 8080:80 res/apache_reverse_proxy`
+Démarrer le container : `docker run -d -p 8080:80 --name apache-reverse-proxy res/apache_reverse_proxy`
 
 Si on accède à "localhost:8080" -> on obtien le message "Forbiden", car le navigateur n'envoie pas le nom de domaine "Host: demo.res.ch".
 Il faut configurer le fichier host pour que cela fonctionne.
 `/etc/hosts`
-
-Problème avec la configuaration du reverse proxy. : "The proxy server received an invalid response from an upstream server."
-elated_engelbart
-express_dynamic
-apache_static
 
 
 ## Step 4 AJAX requests with JQuery
@@ -204,11 +210,12 @@ apache_static
 
 ### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the various images.
-* You do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
-* You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
-* You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
-* You have documented your configuration in your report.
+* OK You have a GitHub repo with everything needed to build the various images.
+* OK You do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
+* OK You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
+* OK You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
+	the data has to come from the same origine or the browser will block the request.
+* OK You have documented your configuration in your report.
 
 ### Realisation
 
@@ -216,20 +223,22 @@ Arrêter les containers : `docker kill <container name>`
 Supprimer tous les containers : `docker rm \`docker ps -qa\``
 
 Ajouter l'installation de vim dans le Dockerfile de l'image `apache-php-image`
->FROM php:7.0-apache
->
->RUN apt-get update && \
->    apt-get install -y vim
->
->COPY content/ /var/www/html/
+```
+FROM php:7.0-apache
+
+RUN apt-get update && \
+    apt-get install -y vim
+
+COPY content/ /var/www/html/
+```
 
 Rebuild l'image : `docker build -t res/apache_php .`
 Idem pour reverser_proxy : `docker build -t res/apache_reverse_proxy .`
-Idem pour express_students : `docker build -t res/express_students .`
+Idem pour express_students : `docker build -t res/express_companies .`
 
 relancer les containers dans le bon ordre pour que les adresse ip soient juste selon la config du proxy.
 apache-statis: `docker run -d --name apache-static res/apache_php`
-expresse-dynamic: `docker run -d --name express-dynamic res/express_students`
+expresse-dynamic: `docker run -d --name express-dynamic res/express_companies`
 reverse-proxy: `docker run -d -p 8080:80 --name apache-reverse-proxy res/apache_reverse_proxy`
 
 On se connect sur le container "apache-static" pour faire la configuration ajax
@@ -237,53 +246,59 @@ On se connect sur le container "apache-static" pour faire la configuration ajax
 
 garder une copie de `index.html` -> `index.html.orig`
 
-Inclure un scipt js en bas de la page index.html pour chager les students
-><!-- Custom script to load students -->
-><script src="js/students.js"></script>
+Inclure un script js en bas de la page index.html pour chager les students
+```
+<!-- Custom script to load students -->
+<script src="js/companies.js"></script>
+```
 
 On crée le script `students.js` dans js
 - la variable "$" est un nom de variable utilisé par JQuery. -> quand JQuery à fini d'être chargé, alors exécuter cette fonction.
 - Le script va faire une requête sur le serveur "express-students" pour récupérer le tableau json.
->$(function(){
->	console.log("loading students");
->
->	function loadStudents() {
->		$.getJSON( "/api/students/", function( students ) {
->			console.log(students);
->			var message = "Nobody is here";
->			if ( students.length > 0 ) {
->				message = students[0].firstName + " " + students[0].lastName;
->			}
->			$(".welcom").text(message);
->		});
->	};
->	loadStudents();
->	setInterval( loadStudents , 2000 );
->});
+```
+$(function(){
+	console.log("loading students");
 
-- `$.getJSON( "/api/students/", function( students ) {` : emet une requête de contun JSON vers "/api/students/" et transmet la réponse à la fonction de call back
-- `$(".welcom").text(message);` : récupère un élément du "DOM" page html pour le remplacer avec le message ( référene un nom de classe ici welcom, également disponnible pour d'autre attributs).
+	function loadStudents() {
+		$.getJSON( "/api/students/", function( students ) {
+			console.log(students);
+			var message = "Nobody is here";
+			if ( students.length > 0 ) {
+				message = students[0].firstName + " " + students[0].lastName;
+			}
+			$(".welcom").text(message);
+		});
+	};
+	loadStudents();
+	setInterval( loadStudents , 2000 );
+});
+```
+
+- `$.getJSON( "/api/companies/", function( companies ) {` : emet une requête de contun JSON vers "/api/companies/" et transmet la réponse à la fonction de call back
+- `$(".company").text(message);` : récupère un élément du "DOM" page html pour le remplacer avec le message ( référene un nom de classe ici company, également disponnible pour d'autre attributs).
 
 Copier le script et les modifs du fichier index.html sur les fichiers hors de l'image.
 Rebuild l'image : `docker build -t res/apache_php .`
 relancer les containers dans le bon ordre
+
 
 ## Step 5 Dynamic reverse proxy
 `fb-dynamic_reverse_proxy`
 
 ### Acceptance criteria
 
-* You have a GitHub repo with everything needed to build the various images.
-* You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
-* You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
-* You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
-* You are able to explain how you have implemented the solution and walk us through the configuration and the code.
-* You have documented your configuration in your report.
+* OK You have a GitHub repo with everything needed to build the various images.
+* OK You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
+* OK You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
+* OK You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
+* OK You are able to explain how you have implemented the solution and walk us through the configuration and the code.
+* OK You have documented your configuration in your report.
 
 ### Realisation
 
 Il est possible de définir des variable d'environnement à l'exécussion d'un docker, ces variables pourront être modifiés depuis l'extérieur du container et accessible depuis l'intéreur.
-```docker run -d
+```
+docker run -d
 	-e STATIC_APP=172.17.0.x:80
 	-e DYNAMIC_APP=172.17.0.y:3000
 	--name apache_reverse_proxy
@@ -315,20 +330,21 @@ On voit mnt les valeurs affichées dans les logs de boot.
 #### template de configuration avec php
 Créer le fichier "templates" dans "apache_reverse_proxy"
 Créer dans template "config-template.php", un template de configuration du serveur apach2
-
-><?php
->    $dynamic_app = getenv('DYNAMIC_APP');
->    $static_app = getenv('STATIC_APP');
->?>
-><VirtualHost *:80>
->    ServerName demo.res.ch
->    
->    ProxyPass '/api/students/' 'http://<?php print "$dynamic_app"?>/'
->    ProxyPassReverse '/api/students/' 'http://<?php print "$dynamic_app"?>/'
->   
->    ProxyPass '/' 'http://<?php print "$static_app"?>/'
->    ProxyPassReverse '/' 'http://<?php print "$static_app"?>/'
-></VirtualHost>
+```
+<?php
+    $dynamic_app = getenv('DYNAMIC_APP');
+    $static_app = getenv('STATIC_APP');
+?>
+<VirtualHost *:80>
+    ServerName demo.res.ch
+    
+    ProxyPass '/api/companies/' 'http://<?php print "$dynamic_app"?>/'
+    ProxyPassReverse '/api/companies/' 'http://<?php print "$dynamic_app"?>/'
+   
+    ProxyPass '/' 'http://<?php print "$static_app"?>/'
+    ProxyPassReverse '/' 'http://<?php print "$static_app"?>/'
+</VirtualHost>
+```
 
 Dans le Dockerfile copier le contenu du template dans /var/apache2/
 `COPY templates /var/apache2/templates`
@@ -346,7 +362,7 @@ on constat que les fichiers contiennent bien les valeurs passée en paramètre a
 
 #### tester le setup dynamic
 lancer le serveur apache static : `docker run -d -t res/apache_php` 3x + `docker run -d --name apache-static -t res/apache_php`
-lancer le serveur express : `docker run -d -t res/express_students` 2x + `docker run -d --name express_dynamic -t res/express_students`
+lancer le serveur express : `docker run -d -t res/express_companies` 2x + `docker run -d --name express_dynamic -t res/express_companies`
 De cette manière les containers utilisé n'auront pas les ips 2 et 3 comme normalement.
 
 récupérer les adresses ip avec instpect :
@@ -358,14 +374,14 @@ lancer le proxy avec les bonnes adresses : `docker run -d -e STATIC_APP=172.17.0
 contrôler que les ip soient juste sur le reverse proxy avec : `docker logs apache-reverse-proxy`
 
 
-## Step 5, Load Balancing Reverse proxy
+## Step 6, Load Balancing Reverse proxy
 `fb-load-balancing-reverse-proxy`
 
 ### Acceptace criteria
-* You extend the reverse proxy configuration to support **load balancing**. 
-* You show that you can have **multiple static server nodes** and **multiple dynamic server nodes**. 
-* You prove that the **load balancer** can distribute HTTP requests between these nodes.
-* You have documented your configuration and your validation procedure in your report.
+* OK You extend the reverse proxy configuration to support **load balancing**.
+* OK You show that you can have **multiple static server nodes** and **multiple dynamic server nodes**.
+* OK You prove that the **load balancer** can distribute HTTP requests between these nodes.
+* OK You have documented your configuration and your validation procedure in your report.
 
 ### Realisation
 
@@ -387,96 +403,105 @@ tester que le site est possible sur les deux containers.
 et en passant pas le proxy (demo.res.ch:8080)
 
 configurer le load balancing entre les deux serveurs : `001-reverse-proxy.conf`
-><VirtualHost *:80>
->	ServerName demo.res.ch
->
->	<Proxy balancer://static>
->		BalancerMemeber 'http://172.17.0.2:80'
->		BalancerMemeber 'http://172.17.0.3:80'
->	</Proxy>
->	ProxyPass '/' 'balancer://static/'
->	ProxyPassReverse '/' 'balancer://static/'
-></VirtualHost>
+```
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	<Proxy balancer://static>
+		BalancerMemeber 'http://172.17.0.2:80'
+		BalancerMemeber 'http://172.17.0.3:80'
+	</Proxy>
+	ProxyPass '/' 'balancer://static/'
+	ProxyPassReverse '/' 'balancer://static/'
+</VirtualHost>
+```
 
 Reload apache : `service apache2 reload`
 vérifier que le site est tjr disponnible en stoppand l'un ou lautre des container.
 
-lancer deux containers express dynamic : `docker run -d -t res/express_students`
+lancer deux containers express dynamic : `docker run -d -t res/express_companies`
 configuer pour le load balancing pour le service dynamic:
-><VirtualHost *:80>
->	ServerName demo.res.ch
->
->	<Proxy balancer://dynamic>
->		BalancerMember 'http://172.17.0.5:3000'
->		BalancerMember 'http://172.17.0.6:3000'
->	</Proxy>
->	ProxyPass '/api/students/' 'balancer://dynamic/'
->	ProxyPassReverse '/api/students/' 'balancer://dynamic/'
->
->	<Proxy balancer://static>
->		BalancerMember 'http://172.17.0.2:80'
->		BalancerMember 'http://172.17.0.3:80'
->	</Proxy>
->	ProxyPass '/' 'balancer://static/'
->	ProxyPassReverse '/' 'balancer://static/'
-></VirtualHost>
+```
+<VirtualHost *:80>
+	ServerName demo.res.ch
+
+	<Proxy balancer://dynamic>
+		BalancerMember 'http://172.17.0.5:3000'
+		BalancerMember 'http://172.17.0.6:3000'
+	</Proxy>
+	ProxyPass '/api/companies/' 'balancer://dynamic/'
+	ProxyPassReverse '/api/companies/' 'balancer://dynamic/'
+
+	<Proxy balancer://static>
+		BalancerMember 'http://172.17.0.2:80'
+		BalancerMember 'http://172.17.0.3:80'
+	</Proxy>
+	ProxyPass '/' 'balancer://static/'
+	ProxyPassReverse '/' 'balancer://static/'
+</VirtualHost>
+```
 
 Tester que le service est tjr disponnbible en stoppant l'un ou l'autre des containers.
 
 Activer le `balancer-manager`:
 ajouter en haut de `001-reverse-proxy.conf`:
-><Location /balancer-manager>
->	SetHandler balancer-manager
->	Order Deny,Allow
->	Deny from all
->	Allow form all setup
-></Location>
->ProxyPass /balancer-manager !
+```
+<Location /balancer-manager>
+	SetHandler balancer-manager
+	Order Deny,Allow
+	Deny from all
+	Allow form all setup
+</Location>
+ProxyPass /balancer-manager !
+```
+
 accès : `demo.res.ch:8080/balancer-manager`
 
 Adaptation du template dynamique pour faire la configuration au boot avec des variables d'environnement.
 Le setup est prévu pour deux noeuds static et deux noeuds dynamiques.
 `config-template-balancer.php`:
-><?php
->    $dynamic_app1 = getenv('DYNAMIC_APP1');
->    $dynamic_app2 = getenv('DYNAMIC_APP2');
->    $static_app1 = getenv('STATIC_APP1');
->    $static_app2 = getenv('STATIC_APP2');
->
->?>
-><VirtualHost *:80>
->    ServerName demo.res.ch
->
->    <Location /balancer-manager>
->        SetHandler balancer-manager
->        Order Deny,Allow
->        Deny from all
->        Allow from all
->    </Location>
->    ProxyPass /balancer-manager !
->
->    <Proxy balancer://dynamic>
->        BalancerMember 'http://<?php print "$dynamic_app1"?>'
->        BalancerMember 'http://<?php print "$dynamic_app2"?>'
->    </Proxy>
->    ProxyPass '/api/students/' 'balancer://dynamic/'
->    ProxyPassReverse '/api/students/' 'balancer://dynamic/'
->
->    <Proxy balancer://static>
->        BalancerMember 'http://<?php print "$static_app1"?>'
->        BalancerMember 'http://<?php print "$static_app2"?>'
->    </Proxy>
->    ProxyPass '/' 'balancer://static//'
->    ProxyPassReverse '/' 'balancer://static/'
-></VirtualHost>
+```
+<?php
+    $dynamic_app1 = getenv('DYNAMIC_APP1');
+    $dynamic_app2 = getenv('DYNAMIC_APP2');
+    $static_app1 = getenv('STATIC_APP1');
+    $static_app2 = getenv('STATIC_APP2');
+
+?>
+<VirtualHost *:80>
+    ServerName demo.res.ch
+
+    <Location /balancer-manager>
+        SetHandler balancer-manager
+        Order Deny,Allow
+        Deny from all
+        Allow from all
+    </Location>
+    ProxyPass /balancer-manager !
+
+    <Proxy balancer://dynamic>
+        BalancerMember 'http://<?php print "$dynamic_app1"?>'
+        BalancerMember 'http://<?php print "$dynamic_app2"?>'
+    </Proxy>
+    ProxyPass '/api/companies/' 'balancer://dynamic/'
+    ProxyPassReverse '/api/companies/' 'balancer://dynamic/'
+
+    <Proxy balancer://static>
+        BalancerMember 'http://<?php print "$static_app1"?>'
+        BalancerMember 'http://<?php print "$static_app2"?>'
+    </Proxy>
+    ProxyPass '/' 'balancer://static//'
+    ProxyPassReverse '/' 'balancer://static/'
+</VirtualHost>
+```
 
 rebuild : `docker build -t res/apache_reverse_proxy .`
 delete all container: `docker rm `docker ps -qa` `
 
 run static 1: `docker run -d --name apache-static1 -t res/apache_php`
 run static 2: `docker run -d --name apache-static2 -t res/apache_php`
-run dynamic 1: `docker run -d --name express_dynamic1 -t res/express_students`
-run dynamic 2: `docker run -d --name express_dynamic2 -t res/express_students`
+run dynamic 1: `docker run -d --name express_dynamic1 -t res/express_companies`
+run dynamic 2: `docker run -d --name express_dynamic2 -t res/express_companies`
 
 run proxy : `docker run -d -e STATIC_APP1=172.17.0.2:80 -e STATIC_APP2=172.17.0.3:80 -e DYNAMIC_APP1=172.17.0.4:3000 -e DYNAMIC_APP2=172.17.0.5:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy`
 
@@ -484,14 +509,15 @@ contrôle infrastructure et tester
 La reprise par l'autre noeud peut être assez longue.(patience)
 
 
-## Step 6, load balancing avec sticky session.
+## Step 7, load balancing avec sticky session.
 `fb-load-balancing-sticky-session`
 
 ### Acceptance Criteria
-* You do a setup to demonstrate the notion of sticky session.
-* You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
-* You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
-* You have documented your configuration and your validation procedure in your report.
+* OK You do a setup to demonstrate the notion of sticky session.
+* OK You prove that your load balancer can distribute HTTP requests in a round-robin fashion to the dynamic server nodes (because there is no state).
+* OK You prove that your load balancer can handle sticky sessions when forwarding HTTP requests to the static server nodes.
+   choice different because more visual.
+* OK You have documented your configuration and your validation procedure in your report.
 
 ### Realisation
 
@@ -503,18 +529,20 @@ création du script pour faire le build et run de toute la structure.
 
 activer le module header :
 configurer la sticky session basé sur le cookies
->    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
->    <Proxy balancer://dynamic>
->        BalancerMember 'http://<?php print "$dynamic_app1"?>' route=1
->        BalancerMember 'http://<?php print "$dynamic_app2"?>' route=2
->        ProxySet stickysession=ROUTEID
->    </Proxy>
+```
+    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+    <Proxy balancer://dynamic>
+        BalancerMember 'http://<?php print "$dynamic_app1"?>' route=1
+        BalancerMember 'http://<?php print "$dynamic_app2"?>' route=2
+        ProxySet stickysession=ROUTEID
+    </Proxy>
+```
 
 en utilisant le template load-balancing -> round robin
 en utilisant le template load-balancing-sticky -> c'est tjr le même serveur express qui est utilisé pour le même client.
 
 
-## Step 7, Dynamic cluster management
+## Step 8, Dynamic cluster management
 `fb-dynamic-cluster-management`
 
 ### Acceptance critera
@@ -525,13 +553,13 @@ en utilisant le template load-balancing-sticky -> c'est tjr le même serveur exp
 
 ### Realisation
 
-## Step 8, UI management
+## Step 9, UI management
 `fb-ui-management`
 
 ### Acceptance critera
-* You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
-* You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
-* You have documented your configuration and your validation procedure in your report.
+* OK  You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
+* OK You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
+* OK You have documented your configuration and your validation procedure in your report.
 
 ### Realisation
 
