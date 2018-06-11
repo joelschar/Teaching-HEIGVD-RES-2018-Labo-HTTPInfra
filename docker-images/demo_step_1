@@ -1,0 +1,9 @@
+#!/bin/bash
+
+docker kill $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker build -t res/apache_php ./apache-php-image/
+docker run -d -p 9090:80 res/apache_php
+
+firefox 'http://localhost:9090'
