@@ -1,0 +1,32 @@
+#!/bin/bash
+
+docker kill $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker build -t res/apache_php ./apache-php-image/
+docker build -t res/express_companies ./express-image/
+docker build -t res/apache_reverse_proxy ./apache-reverse-proxy/
+
+docker run -d  res/apache_php
+docker run -d  res/apache_php
+docker run -d  res/apache_php
+docker run -d --name apache_static res/apache_php
+
+docker run -d  res/express_companies
+docker run -d  res/express_companies
+docker run -d --name express_dynamic res/express_companies
+
+docker run -d -e STATIC_APP=172.17.0.5:80 -e DYNAMIC_APP=172.17.0.8:3000 --name apache-reverse-proxy -p 8080:80 -t res/apache_reverse_proxy
+
+docker ps
+
+echo "apache_static: "
+docker inspect apache_static | grep IPAddress
+
+echo "express_dynamic: "
+docker inspect express_dynamic | grep IPAddress
+
+echo "apache_reverse_proxy: "
+docker logs apache-reverse-proxy
+
+firefox "http://demo.res.ch:8080"
