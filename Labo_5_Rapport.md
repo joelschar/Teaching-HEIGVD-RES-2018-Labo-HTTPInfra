@@ -529,12 +529,14 @@ création du script pour faire le build et run de toute la structure.
 
 activer le module header :
 configurer la sticky session basé sur le cookies
->    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
->    <Proxy balancer://dynamic>
->        BalancerMember 'http://<?php print "$dynamic_app1"?>' route=1
->        BalancerMember 'http://<?php print "$dynamic_app2"?>' route=2
->        ProxySet stickysession=ROUTEID
->    </Proxy>
+```
+    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+    <Proxy balancer://dynamic>
+        BalancerMember 'http://<?php print "$dynamic_app1"?>' route=1
+        BalancerMember 'http://<?php print "$dynamic_app2"?>' route=2
+        ProxySet stickysession=ROUTEID
+    </Proxy>
+```
 
 en utilisant le template load-balancing -> round robin
 en utilisant le template load-balancing-sticky -> c'est tjr le même serveur express qui est utilisé pour le même client.
@@ -555,9 +557,9 @@ en utilisant le template load-balancing-sticky -> c'est tjr le même serveur exp
 `fb-ui-management`
 
 ### Acceptance critera
-* You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
-* You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
-* You have documented your configuration and your validation procedure in your report.
+* OK  You develop a web app (e.g. with express.js) that administrators can use to monitor and update your web infrastructure.
+* OK You find a way to control your Docker environment (list containers, start/stop containers, etc.) from the web app. For instance, you use the Dockerode npm module (or another Docker client library, in any of the supported languages).
+* OK You have documented your configuration and your validation procedure in your report.
 
 ### Realisation
 
