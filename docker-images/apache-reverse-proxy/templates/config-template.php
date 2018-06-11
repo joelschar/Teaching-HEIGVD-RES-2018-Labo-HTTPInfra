@@ -4,12 +4,10 @@
 ?>
 <VirtualHost *:80>
     ServerName demo.res.ch
-    
-    ProxyPass '/api/students/' 'http://<?php print "$dynamic_app"?>/'
-    ProxyPassReverse '/api/students/' 'http://<?php print "$dynamic_app"?>/'
-   
+
+    ProxyPass '/api/companies/' 'http://<?php print "$dynamic_app"?>/'
+    ProxyPassReverse '/api/companies/' 'http://<?php print "$dynamic_app"?>/'
+
     ProxyPass '/' 'http://<?php print "$static_app"?>/'
     ProxyPassReverse '/' 'http://<?php print "$static_app"?>/'
 </VirtualHost>
-
-
