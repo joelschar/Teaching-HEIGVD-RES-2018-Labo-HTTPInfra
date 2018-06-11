@@ -1,0 +1,18 @@
+#!/bin/bash
+
+docker kill $(docker ps -q)
+docker rm $(docker ps -a -q)
+
+docker build -t res/apache_static ./apache-php-image/
+docker build -t res/express_companies ./express-image/
+docker build -t res/apache_reverse_proxy ./apache-reverse-proxy/
+
+docker run -d --name apache_static res/apache_php
+docker run -d --name express_dynamic res/express_companies
+docker run -d -p 8080:80 --name apache_reverse_proxy res/apache_reverse_proxy
+
+firefox "http://localhost:80"
+firefox "http://localhost:3000"
+firefox "http://localhost:8080"
+firefox "http://demo.res.ch:8080"
+firefox "http://demo.res.ch:8080/api/companies/"
